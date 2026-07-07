@@ -1,97 +1,72 @@
 # SDG-TIPS Migration Plan
 
-## 1. Implement Lifecycle Scripts
+## Directory Mapping
 
-All four root-level lifecycle scripts are **empty stubs** — must be implemented:
+| Source | Installed to |
+|--------|-------------|
+| `local/SDG-TIPS/tips.sh` | `~/.local/SDG-TIPS/tips.sh` |
+| `local/SDG-TIPS/tips.list` | `~/.local/tips/SDG-TIPS/tips.list` |
+| `tips/` | `~/.local/tips/SDG-TIPS/` |
+| `docs/` | `~/.local/docs/SDG-TIPS/` |
 
-| Script | Purpose |
-|--------|---------|
-| `install.sh` | Deploy `local/SDG-TIPS/tips.sh` → `~/.config/sdgos/tips/tips.sh`, deploy `local/SDG-TIPS/tips.list` → `~/.config/sdgos/tips/tips.list`, deploy `local/SDG-TIPS/showtip.sh` → `~/.config/sdgos/tips/showtip.sh` |
-| `uninstall.sh` | Remove `~/.config/sdgos/tips/`, remove `~/.config/tips.state` (user preference) |
-| `update.sh` | Overwrite tips.sh and tips.list (showtip.sh if improved) |
-| `detect.sh` | Check for `shuf`, `cowsay`, `lolcat` (optional deps for cow mode) |
+## Architecture Change
 
-## 2. Path Audit
+The old design stored tips at `~/.config/sdgos/tips/tips.list` and was referenced via `tips.sh` as a single-file list. The **new architecture** uses **multi-source tip directories**: each module owns `~/.local/tips/<module>/` and the tips engine (`tips.sh`) iterates all `~/.local/tips/*/` directories.
 
-### 2.1 `tips.sh` references
-- Line 3: `~/.config/tips.state` — state file in top-level `~/.config/` (not under sdgos). Consider moving to `~/.config/sdgos/tips/tips.state` for consistency.
-- Line 17: `~/.config/sdgos/tips/tips.list` — correct.
-- Line 20: `~/.config/sdgos/tips/tips.list` — correct.
+SDG-TIPS itself becomes a **tips module** — it provides a `tips.list` that goes into `~/.local/tips/SDG-TIPS/tips.list` (as one file in the collective pool), plus its own `tips/` directory for additional tip files.
 
-### 2.2 `showtip.sh`
-- Currently just a shebang — needs implementation. What should it do differently from `tips.sh`?
-
-### 2.3 No hardcoded `/home/$(whoami)/` paths found — good.
-
-## 3. Cross-module References
-
-### 3.1 SDG-TERM references this module
-- `config/ghostty/config.ghostty` line 7: runs `tips.sh` on terminal launch.
-- `other/zshconfig.zsh` lines 26-28: `tipme`, `alltips`, `cowtip` aliases.
-
-### 3.2 SDG-MANGO-CORE references this module
-- `config/mango/binds.conf` line 6: `SUPER+0` → `shuf -n 1 ~/.config/sdgos/tips/tips.list`.
-- `config/DankMaterialShell/plugin_settings.json` lines 33-43: DMS panel shows random tip.
-
-### 3.3 SDG-UTIL-SCRIPTS references this module
-- `local/SDG-HELP/topics/002` and `004` describe the tips system.
-
-## 4. Modular Tips System — Architecture
-
-### 4.1 Problem
-Currently there is **no mechanism** for other modules to contribute their own tips. All tips live in SDG-TIPS' `tips.list`. Other modules that want to add tips must either:
-1. Append to `~/.config/sdgos/tips/tips.list` during their own install (error-prone, conflicts).
-2. Be ignored — tips stay centralized.
-
-### 4.2 Solution: Multi-source tip aggregation
-Modify `tips.sh` to read from multiple sources:
-
+The `tips.sh` engine needs updating to support **multi-directory iteration**:
 ```bash
-# Ordered list of tip sources (directories with tips.list files)
-TIPS_DIRS=(
-  "$HOME/.config/sdgos/tips"           # SDG-TIPS core
-  "$HOME/.config/sdgos/tips/modules"   # Other modules contribute here
-)
+for tip_dir in "$HOME/.local/tips"/*/; do
+  if [ -f "$tip_dir/tips" ]; then
+    tips_list+=("$tip_dir/tips")
+  fi
+done
 ```
 
-**New installation convention:**
-- Each module can place `tips.list` in its `tips/` directory.
-- When a module is installed via `sdgpkg install`, the SDG-PKG lifecycle should:
-  1. Copy the module's `tips/` contents to `~/.config/sdgos/tips/modules/<module-name>/tips.list`.
-  2. Or, append the module's tip lines to a merged file.
+## Path Rewrites
 
-**Approach A — Directory merge (recommended):**
-```
-~/.config/sdgos/tips/tips.list                  # Core tips (SDG-TIPS)
-~/.config/sdgos/tips/modules/SDG-FETCH/tips    # SDG-FETCH tips file
-~/.config/sdgos/tips/modules/SDG-TERM/tips     # SDG-TERM tips file
-~/.config/sdgos/tips/modules/SDG-MANGO-CORE/tips # MANGO-CORE tips
-```
-Modify `tips.sh` to concatenate all files with `cat ~/.config/sdgos/tips/*/tips` and pipe to `shuf -n 1`.
+### tips.sh — internal references
 
-**Approach B — Install-time concatenation:**
-Each module's `install.sh` appends its tips to `~/.config/sdgos/tips/tips.list`. Simpler but messier.
+| Old | New |
+|-----|-----|
+| `TIPS_FILE="$HOME/.config/sdgos/tips/tips.list"` | `TIPS_DIR="$HOME/.local/tips"` (iterate dirs) |
+| Single-file mode | Multi-file mode (see above) |
 
-### 4.3 Implementation steps for tips.sh
-1. Change line 17 from: `shuf -n 1 ~/.config/sdgos/tips/tips.list`
-2. To: `find ~/.config/sdgos/tips -name 'tips.list' -o -name 'tips' | xargs cat | shuf -n 1`
+### Cross-module references TO tips.sh
 
-## 5. Modular Help System Integration
+| File | Old | New |
+|------|-----|-----|
+| SDG-CONF/zshconfig.zsh | `~/.config/sdgos/tips/tips.sh` | `~/.local/SDG-TIPS/tips.sh` |
+| SDG-TERM/config.ghostty | `~/.config/sdgos/tips/tips.sh` | `~/.local/SDG-TIPS/tips.sh` |
+| SDG-MANGO-CORE/binds.conf | `~/.config/sdgos/tips/tips.list` | `~/.local/tips/SDG-TIPS/tips.list` |
+| SDG-MANGO-CORE/plugin_settings.json | `~/.config/sdgos/tips/tips.list` | `~/.local/tips/SDG-TIPS/tips.list` |
 
-### 5.1 Add help command for tips
-- `tips.sh --help` should show usage info.
-- Consider contributing a help topic about the tips system itself.
+## tips.list Content Review
 
-## 6. Empty Directory Cleanup
+Current `tips.list` contains 11 tips. All are generic. Consider:
+- Removing tips about old paths (any mentioning `~/.config/sdgos/`)
+- Adding tips explaining the new `~/.local/tips/<module>/` architecture
+- Adding tips about the tip system itself
 
-| Directory | Status |
-|-----------|--------|
-| `cache/` | Empty — remove |
-| `tips/` | Empty — this is where module-specific tips should go (contradicts the name; rename to `contrib/` or populate) |
-| `config/` | Empty — remove |
-| `other/` | Empty — remove |
+## Lifecycle Scripts
 
-## 7. Cross-package tips
-- SDG-TIPS' `tips.list` currently contains tips about SDG-TERM and SDG-MANGO-CORE features.
-- After modularization, those modules should own their own tips, and SDG-TIPS should only contain generic SDG-OS tips.
-- Migration: move terminal tips to SDG-TERM, mangoWM/DMS tips to SDG-MANGO-CORE, etc.
+All four root-level scripts are empty. Implement:
+
+- **install.sh**: Copy `local/SDG-TIPS/tips.sh` → `~/.local/SDG-TIPS/tips.sh`, copy `tips.list` → `~/.local/tips/SDG-TIPS/tips.list`, copy `tips/` → `~/.local/tips/SDG-TIPS/`, copy docs.
+- **uninstall.sh**: Remove `~/.local/SDG-TIPS/` and `~/.local/tips/SDG-TIPS/`.
+- **update.sh**: Re-deploy.
+- **detect.sh**: Always succeeds (no external dependencies beyond bash).
+
+## Modular Tips
+
+- `tips/` and `local/tips.list` both go to `~/.local/tips/SDG-TIPS/`
+
+## Modular Docs
+
+- `docs/` is empty — document the tips system, how modules contribute tips, how to add tips.
+
+## Cleanup
+
+- Remove empty `cache/`, `other/`
+- Remove empty `tips/` or populate
