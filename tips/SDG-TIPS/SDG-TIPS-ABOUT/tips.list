@@ -1,0 +1,6 @@
+Use 'sdgtip sources' to see which modules have tip files available
+Use 'sdgtip list --from MODULE' to browse tips from a specific module
+Exclude noisy modules by running: sdgtip config exclude add MODULE
+Each module can ship its own tips under ~/.local/tips/MODULE/tips.list
+The sdgtip CLI aggregates tips from all installed modules automatically
+Use 'sdgtip random' to get a random tip on demand

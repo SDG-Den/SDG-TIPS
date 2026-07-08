@@ -1,0 +1,240 @@
+#!/bin/bash
+
+CONFIG_FILE="$HOME/.config/SDG-TIPS/config.toml"
+TIPS_DIR="$HOME/.local/tips"
+STATE_FILE="$HOME/.config/tips.state"
+
+print_usage() {
+    cat <<EOF
+Usage: sdgtip [command] [options]
+
+Commands:
+  random [--from MODULE]   Show a random tip (default command)
+  list [--from MODULE]     Browse tips interactively with fzf
+  sources                  List available tip sources with counts
+  config exclude add MODULE
+  config exclude remove MODULE
+  config exclude list
+
+Options:
+  --from MODULE   Limit to a specific module's tips (e.g. SDG-TIPS, SDG-FETCH)
+EOF
+}
+
+get_excluded_sources() {
+    [ -f "$CONFIG_FILE" ] || return
+    local in_exclude=0
+    while IFS= read -r line; do
+        line="${line#"${line%%[![:space:]]*}"}"
+        [[ "$line" =~ ^\[exclude\]$ ]] && { in_exclude=1; continue; }
+        [[ "$line" =~ ^\[ ]] && in_exclude=0
+        if [ "$in_exclude" -eq 1 ] && [[ "$line" =~ ^sources ]]; then
+            echo "$line" | sed 's/.*=\s*\[//;s/\].*//;s/,/\n/g;s/"//g' | while read -r s; do
+                s="${s#"${s%%[![:space:]]*}"}"
+                s="${s%"${s##*[![:space:]]}"}"
+                [ -n "$s" ] && echo "$s"
+            done
+        fi
+    done < "$CONFIG_FILE"
+}
+
+tip_lines() {
+    local source_filter="$1"
+    local exclude_list=()
+    while IFS= read -r e; do exclude_list+=("$e"); done < <(get_excluded_sources)
+
+    while IFS= read -r -d '' f; do
+        local mod="$(basename "$(dirname "$f")")"
+        local parent_mod="$(basename "$(dirname "$(dirname "$f")")")"
+
+        for excl in "${exclude_list[@]}"; do
+            [[ "$mod" == "$excl" || "$parent_mod" == "$excl" ]] && continue 2
+        done
+
+        if [ -n "$source_filter" ]; then
+            [[ "$mod" != "$source_filter" && "$parent_mod" != "$source_filter" ]] && continue
+        fi
+
+        while IFS= read -r line; do
+            [ -n "$line" ] && echo "$line"
+        done < "$f"
+    done < <(find "$TIPS_DIR" -name '*.list' -type f -print0 2>/dev/null)
+}
+
+count_tips() {
+    tip_lines "$1" | wc -l
+}
+
+cmd_random() {
+    local source_filter="$1"
+    local total=$(count_tips "$source_filter")
+    if [ "$total" -eq 0 ]; then
+        echo "No tips available."
+        [ -n "$source_filter" ] && echo "Try a different source module or check your exclusions in $CONFIG_FILE"
+        exit 1
+    fi
+
+    local setting="standard"
+    [ -f "$STATE_FILE" ] && setting=$(cat "$STATE_FILE")
+
+    local tip=$(tip_lines "$source_filter" | shuf -n 1)
+    case "$setting" in
+        cow)
+            echo "$tip" | cowsay -r 2>/dev/null | lolcat 2>/dev/null || echo "$tip"
+            ;;
+        standard|*)
+            echo "$tip"
+            ;;
+    esac
+}
+
+cmd_list() {
+    local source_filter="$1"
+    local total=$(count_tips "$source_filter")
+    if [ "$total" -eq 0 ]; then
+        echo "No tips available."
+        [ -n "$source_filter" ] && echo "Try a different source module or check your exclusions in $CONFIG_FILE"
+        exit 1
+    fi
+
+    tip_lines "$source_filter" | fzf --layout=reverse --preview-window='top:5:wrap' --preview='echo {}'
+}
+
+cmd_sources() {
+    if [ ! -d "$TIPS_DIR" ]; then
+        echo "No tip sources found."
+        exit 0
+    fi
+
+    printf "%-30s %s\n" "Source" "Tips"
+    printf "%-30s %s\n" "------" "----"
+    local exclude_list=()
+    while IFS= read -r e; do exclude_list+=("$e"); done < <(get_excluded_sources)
+
+    for dir in "$TIPS_DIR"/*/; do
+        local mod="$(basename "$dir")"
+        for excl in "${exclude_list[@]}"; do
+            [[ "$mod" == "$excl" ]] && continue 2
+        done
+
+        local total=0
+        local subdirs=()
+        while IFS= read -r -d '' f; do
+            subdirs+=("$(basename "$(dirname "$f")")")
+        done < <(find "$dir" -name '*.list' -type f -print0 2>/dev/null)
+
+        local top_lines=0
+        if [ -f "$dir/tips.list" ]; then
+            top_lines=$(wc -l < "$dir/tips.list")
+        fi
+        printf "%-30s %s\n" "$mod" "$top_lines"
+
+        for sub in "$dir"*/; do
+            [ -d "$sub" ] || continue
+            local subname="$(basename "$sub")"
+            local subcount=$(find "$sub" -name '*.list' -type f -exec cat {} + 2>/dev/null | wc -l)
+            [ "$subcount" -gt 0 ] && printf "  %-28s %s\n" "$subname" "$subcount"
+        done
+    done
+}
+
+cmd_config() {
+    local action="$1"
+    local module="$2"
+    mkdir -p "$(dirname "$CONFIG_FILE")"
+    [ -f "$CONFIG_FILE" ] || cat > "$CONFIG_FILE" <<EOF
+[exclude]
+sources = []
+EOF
+
+    case "$action" in
+        exclude)
+            local sub="$3"
+            case "$sub" in
+                add)
+                    [ -z "$module" ] && { echo "Usage: sdgtip config exclude add MODULE"; exit 1; }
+                    local tmp=$(mktemp)
+                    local current=$(grep -A10 '^\[exclude\]' "$CONFIG_FILE" | grep 'sources' | sed 's/.*=\s*\[//;s/\].*//')
+                    local new_entry
+                    if echo "$current" | grep -qw "$module"; then
+                        echo "Module '$module' is already excluded."
+                        rm -f "$tmp"
+                        exit 0
+                    fi
+                    if [ -z "$current" ]; then
+                        new_entry="$module"
+                    else
+                        new_entry="$current, \"$module\""
+                    fi
+                    sed "s/^sources\s*=\s*\[.*\]/sources = [$new_entry]/" "$CONFIG_FILE" > "$tmp" && mv "$tmp" "$CONFIG_FILE"
+                    echo "Excluded '$module' from tips."
+                    ;;
+                remove)
+                    [ -z "$module" ] && { echo "Usage: sdgtip config exclude remove MODULE"; exit 1; }
+                    local tmp=$(mktemp)
+                    local current=$(grep -A10 '^\[exclude\]' "$CONFIG_FILE" | grep 'sources' | sed 's/.*=\s*\[//;s/\].*//')
+                    local new_entries=()
+                    while IFS=',' read -ra items; do
+                        for item in "${items[@]}"; do
+                            item="$(echo "$item" | tr -d ' "')"
+                            [ -n "$item" ] && [ "$item" != "$module" ] && new_entries+=("$item")
+                        done
+                    done <<< "$current"
+                    local joined
+                    if [ "${#new_entries[@]}" -gt 0 ]; then
+                        printf -v joined '", "'; joined=$(printf '"%s"' "${new_entries[*]}")
+                    fi
+                    sed "s/^sources\s*=\s*\[.*\]/sources = [$joined]/" "$CONFIG_FILE" > "$tmp" && mv "$tmp" "$CONFIG_FILE"
+                    echo "Removed '$module' from exclusions."
+                    ;;
+                list)
+                    echo "Excluded sources:"
+                    get_excluded_sources | sed 's/^/  /'
+                    [ "$(get_excluded_sources | wc -l)" -eq 0 ] && echo "  (none)"
+                    ;;
+                *)
+                    echo "Usage: sdgtip config exclude {add|remove|list} [MODULE]"
+                    ;;
+            esac
+            ;;
+        *)
+            echo "Usage: sdgtip config {exclude}"
+            echo "  exclude add MODULE     Exclude a module from tip selection"
+            echo "  exclude remove MODULE  Remove a module from exclusions"
+            echo "  exclude list           List excluded modules"
+            ;;
+    esac
+}
+
+SOURCE_FILTER=""
+CMD=""
+
+case "$(basename "$0")" in
+    alltips)    CMD="list" ;;
+    tipme)      CMD="random" ;;
+esac
+
+while [ $# -gt 0 ]; do
+    case "$1" in
+        --from)
+            shift; SOURCE_FILTER="$1"; shift
+            ;;
+        random|list|sources|config)
+            CMD="$1"; shift
+            ;;
+        help|--help|-h)
+            print_usage; exit 0
+            ;;
+        *)
+            CMD="$1"; shift
+            ;;
+    esac
+done
+
+case "${CMD:-random}" in
+    random)         cmd_random "$SOURCE_FILTER" ;;
+    list)           cmd_list "$SOURCE_FILTER" ;;
+    sources)        cmd_sources ;;
+    config)         cmd_config "$@" ;;
+    *)              echo "Unknown command: $CMD"; print_usage; exit 1 ;;
+esac
