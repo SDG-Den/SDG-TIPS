@@ -2,9 +2,11 @@ Package Name: sdg-tips
 Descriptive Name: SDG Tip-of-the-Day System
 Source: https://git.sdgcloud.nl/SDGDen/SDG-TIPS
 Maintainer: SDGDen <sdgden@sdgcloud.nl>
-Version: 0.1.0
+Version:0.2
 
-Dependencies: bash, coreutils (shuf, find, wc, mktemp), sed
+Dependencies: 
+bash, coreutils (shuf, find, wc, mktemp), sed
 Optional: fzf, cowsay, lolcat
 
-Description: Modular tip-of-the-day system for SDG-OS. Aggregates tip files from every installed module's ~/.local/tips/<MODULE>/ directory. Ships 167 general tips and 6 meta-tips. Commands: sdgtip (random), tipme (random), alltips (list browser). Features TOML-based module exclusion, cowsay/lolcat support, and fzf integration.
+Description: 
+Modular tip-of-the-day system for SDG-OS. Aggregates tip files from every installed module's ~/.local/tips/<MODULE>/ directory. Ships 167 general tips and 6 meta-tips. Commands: sdgtip (random), tipme (random), alltips (list browser). Features TOML-based module exclusion, cowsay/lolcat support, and fzf integration.
