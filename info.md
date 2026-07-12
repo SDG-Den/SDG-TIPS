@@ -2,7 +2,7 @@ Package Name: sdg-tips
 Descriptive Name: SDG Tip-of-the-Day System
 Source: https://github.com/SDG-Den/SDG-TIPS
 Maintainer: SDGDen
-Version:0.2
+Version:0.2.1
 
 Dependencies: 
 bash, coreutils (shuf, find, wc, mktemp), sed

@@ -2,6 +2,8 @@
 
 WORKDIR="$HOME/.cache/SDG-PKG/sdg-tips"
 
+unipkg install any fzf
+
 cp -r "$WORKDIR/local/"* "$HOME/.local/"
 cp -r "$WORKDIR/docs/"* "$HOME/.local/docs/"
 cp -r "$WORKDIR/tips/"* "$HOME/.local/tips/"
