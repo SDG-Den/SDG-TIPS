@@ -1,7 +1,7 @@
 Package Name: sdg-tips
 Descriptive Name: SDG Tip-of-the-Day System
-Source: https://git.sdgcloud.nl/SDGDen/SDG-TIPS
-Maintainer: SDGDen <sdgden@sdgcloud.nl>
+Source: https://github.com/SDG-Den/SDG-TIPS
+Maintainer: SDGDen
 Version:0.2
 
 Dependencies: 
