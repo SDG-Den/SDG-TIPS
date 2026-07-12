@@ -1,9 +1,9 @@
-Use 'sdgtip sources' to see which modules have tip files available
-Use 'sdgtip list --from MODULE' to browse tips from a specific module
-Exclude noisy modules by running: sdgtip config exclude add MODULE
-Each module can ship its own tips under ~/.local/tips/MODULE/tips.list
-The sdgtip CLI aggregates tips from all installed modules automatically
-Use 'sdgtip random' to get a random tip on demand
-Use 'sdgtip list' to browse and search all tips interactively with fzf
-Use 'sdgtip --from MODULE' to focus tips on a specific module
-Use 'sdgtip config exclude add MODULE' to silence a noisy module
+[SDG-TIPS-ABOUT]: Use 'sdgtip sources' to see which modules have tip files available
+[SDG-TIPS-ABOUT]: Use 'sdgtip list --from MODULE' to browse tips from a specific module
+[SDG-TIPS-ABOUT]: Exclude noisy modules by running: sdgtip config exclude add MODULE
+[SDG-TIPS-ABOUT]: Each module can ship its own tips under ~/.local/tips/MODULE/tips.list
+[SDG-TIPS-ABOUT]: The sdgtip CLI aggregates tips from all installed modules automatically
+[SDG-TIPS-ABOUT]: Use 'sdgtip random' to get a random tip on demand
+[SDG-TIPS-ABOUT]: Use 'sdgtip list' to browse and search all tips interactively with fzf
+[SDG-TIPS-ABOUT]: Use 'sdgtip --from MODULE' to focus tips on a specific module
+[SDG-TIPS-ABOUT]: Use 'sdgtip config exclude add MODULE' to silence a noisy module
