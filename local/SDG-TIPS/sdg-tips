@@ -140,7 +140,7 @@ cmd_sources() {
 
 cmd_config() {
     local action="$1"
-    local module="$2"
+    local sub="$2"
     mkdir -p "$(dirname "$CONFIG_FILE")"
     [ -f "$CONFIG_FILE" ] || cat > "$CONFIG_FILE" <<EOF
 [exclude]
@@ -149,7 +149,7 @@ EOF
 
     case "$action" in
         exclude)
-            local sub="$3"
+            local module="$3"
             case "$sub" in
                 add)
                     [ -z "$module" ] && { echo "Usage: sdgtip config exclude add MODULE"; exit 1; }
@@ -219,8 +219,11 @@ while [ $# -gt 0 ]; do
         --from)
             shift; SOURCE_FILTER="$1"; shift
             ;;
-        random|list|sources|config)
+        random|list|sources)
             CMD="$1"; shift
+            ;;
+        config)
+            CMD="$1"; shift; break
             ;;
         help|--help|-h)
             print_usage; exit 0
