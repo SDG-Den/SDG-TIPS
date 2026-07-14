@@ -4,7 +4,7 @@ The SDG-OS tips system — display random tips and guidance from all installed m
 
 ## Description
 
-SDG-TIPS aggregates tip files from every module's `~/.local/tips/<MODULE>/` directory and provides a CLI engine for displaying them. It ships with 167 general tips plus module-specific tips.
+SDG-TIPS aggregates tip files from every module's `~/.local/tips/<MODULE>/` directory and provides a CLI engine for displaying them. It ships with a general tip collection plus module-specific tips from each installed package.
 
 ## Features
 

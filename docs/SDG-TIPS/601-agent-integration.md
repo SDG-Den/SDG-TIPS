@@ -1,4 +1,4 @@
-# Agent / AI Integration
+# Script and Agent Usage
 
 SDG-TIPS is designed for programmatic consumption. Every command outputs
 plain text, making it trivial to use in scripts, agents, and automation.
@@ -28,9 +28,9 @@ already wired as `SUPER+0`:
 SUPER+0 = notify-send "$(sdgtip random)"
 ```
 
-## Scripts and cron
+## Scoping tips by module
 
-Use `--from MODULE` to scope tips to a relevant domain:
+Use `--from MODULE` in any context to scope tips to a relevant domain:
 
 ```bash
 # Random networking tip
@@ -63,7 +63,7 @@ sdgtip config exclude list
 
 ## Tip source discovery
 
-List all available modules and their tip counts:
+List all available modules and their tips:
 
 ```bash
 sdgtip sources
@@ -87,7 +87,4 @@ echo "Context: $TIP"
 The output has no control characters, ANSI codes, or markdown wrapping —
 just the raw tip text.
 
-## Planned
 
-- `--format json` — structured output for machine parsing
-- `--format full` — detailed tips with metadata

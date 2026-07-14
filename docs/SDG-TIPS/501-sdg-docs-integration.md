@@ -12,7 +12,7 @@ maintainable.
 | Purpose | Remind *what* | Explain *how* and *why* |
 | Consumption | Rotated randomly or browsed with fzf | Searched or browsed by topic |
 | Format | Plain text `.list` files | Markdown `.md` files |
-| Delivery | `sdgtip random`, `sdgtip list` | `sdgdocs browse`, `sdgdocs search` |
+| Delivery | `sdgtip random`, `sdgtip list` | Documentation browser |
 
 ## When to write a tip vs a doc
 
@@ -30,7 +30,7 @@ maintainable.
 
 Tips can reference docs by name. For example, a tip might say:
 
-> Use 'sdgdocs browse SDG-TERM' to read about terminal configuration
+> Use the documentation system to read about terminal configuration
 
 And a doc can mention the tip system:
 
@@ -38,11 +38,4 @@ And a doc can mention the tip system:
 
 This keeps both systems lightweight and mutually reinforcing.
 
-## Virtual tip sub-modules
 
-A directory under `tips/MODULE/SUBMODULE/tips.list` is a *virtual tip
-sub-module*. It appears as a sub-source in `sdgtip sources` and can be
-promoted to a full doc module later without changing any consumer paths.
-
-This makes tips a useful staging ground: start as a tip, grow into a doc
-when the topic warrants deeper coverage.
