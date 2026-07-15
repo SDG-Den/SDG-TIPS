@@ -13,7 +13,6 @@ SDG-TIPS aggregates tip files from every module's `~/.local/tips/<MODULE>/` dire
 - **Module filter** — `sdgtip --from MODULE` scopes to one source
 - **Source listing** — `sdgtip sources` shows modules with tip counts
 - **Module exclusion** — `sdgtip config exclude <add|remove> <module>` to hide modules
-- **Keybind** — SUPER+0 bound to `sdgtip random` (from SDG-MANGO-CORE)
 - **Terminal startup** — SDG-TERM runs `sdgtip random` on every new terminal
 - **Fun rendering** — `cowtip` for cowsay mode, `lolcat` for rainbow coloring
 
@@ -47,4 +46,4 @@ sdgpkg install sdg-tips
 
 - **SDG-DOCS** — companion documentation system
 - **SDG-TERM** — runs tips on startup, provides aliases
-- **SDG-MANGO-CORE** — binds SUPER+0 to tips
+

@@ -6,7 +6,6 @@ Tips are short one-line reminders that help you discover SDG-OS features and key
 
 | Method | What it does |
 |--------|--------------|
-| Press **SUPER+0** | Shows a random tip as a desktop notification |
 | Run `tipme` | Shows a random tip in the terminal |
 | Run `sdgtip random` | Same as tipme |
 | Run `sdgtip list` | Opens an interactive browser to search through all tips |

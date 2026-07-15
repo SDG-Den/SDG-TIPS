@@ -1,4 +1,4 @@
-# Script and Agent Usage
+# Script Usage
 
 SDG-TIPS is designed for programmatic consumption. Every command outputs
 plain text, making it trivial to use in scripts, agents, and automation.
@@ -21,8 +21,7 @@ sdgtip random
 
 ## Desktop notifications
 
-Bind `sdgtip random` to a keybind for on-demand tips. In SDG-OS this is
-already wired as `SUPER+0`:
+Bind `sdgtip random` to a keybind for on-demand tips:
 
 ```
 SUPER+0 = notify-send "$(sdgtip random)"
