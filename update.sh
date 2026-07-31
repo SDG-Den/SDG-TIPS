@@ -1,5 +1,8 @@
 #!/bin/bash
 
+### dependencies
+sdgpkg depends "fzf"
+
 WORKDIR="$HOME/.cache/SDG-PKG/sdg-tips"
 
 rm -rf "$HOME/.local/SDG-TIPS"

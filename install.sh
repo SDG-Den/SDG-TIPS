@@ -1,8 +1,9 @@
 #!/bin/bash
 
-WORKDIR="$HOME/.cache/SDG-PKG/sdg-tips"
+### dependencies
+sdgpkg depends "fzf"
 
-unipkg install any fzf
+WORKDIR="$HOME/.cache/SDG-PKG/sdg-tips"
 
 cp -r "$WORKDIR/local/"* "$HOME/.local/"
 cp -r "$WORKDIR/docs/"* "$HOME/.local/docs/"

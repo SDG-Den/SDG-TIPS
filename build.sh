@@ -1,5 +1,8 @@
 #!/bin/bash
 
+### dependencies
+sdgpkg depends "fzf"
+
 LOCALDIR=SDG-TIPS
 DOCDIR=SDG-TIPS
 TIPDIR=SDG-TIPS
